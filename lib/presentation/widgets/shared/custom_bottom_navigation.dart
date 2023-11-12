@@ -1,55 +1,78 @@
 import 'package:flutter/material.dart';
+
 import 'package:go_router/go_router.dart';
+import 'package:cinemapedia/presentation/icons_app_icons.dart';
 
-class CustomBottomNavigation extends StatelessWidget {
+class CustomBottomNavigationBar extends StatelessWidget {
+  final StatefulNavigationShell navigationShell;
+  const CustomBottomNavigationBar({required this.navigationShell, super.key});
 
-  final int currentIndex;
+  Future<bool> handleOnWillPop(BuildContext context) async {
+    final location = navigationShell.shellRouteContext.routerState.uri.toString();
 
-  const CustomBottomNavigation({
-    super.key, 
-    required this.currentIndex
-  });
-
-  void onItemTapped( BuildContext context, int index ) {
-
-    switch(index) {
-      case 0:
-        context.go('/home/0');
-        break;
-
-      case 1:
-        context.go('/home/1');
-        break;
-
-      case 2:
-        context.go('/home/2');
-        break;    
+    if (location != '/') {
+      navigationShell.goBranch(0);
+      return false;
     }
 
-  }  
+    late bool isUserExit;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('¿Quieres Salir?'),
+          content: const Text('Estás a punto de salir de la Aplicación.'),
+          actions: [
+            FilledButton.tonal(
+              child: const Text('Cancelar'),
+              onPressed: () {
+                isUserExit = false;
+                context.pop();
+              },
+            ),
+            FilledButton(
+              child: const Text('Salir'),
+              onPressed: () {
+                isUserExit = true;
+                context.pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+    return isUserExit;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: (value) => onItemTapped(context, value),
-      elevation: 0,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon( Icons.home_max),
-          label: 'Inicio'
-        ),
+    final colors = Theme.of(context).colorScheme;
 
-        BottomNavigationBarItem(
-          icon: Icon( Icons.label_outline),
-          label: 'Categorias'
-        ),
-
-        BottomNavigationBarItem(
-          icon: Icon( Icons.favorite_outline),
-          label: 'Favorritos'
-        ),
-      ]
+    return WillPopScope(
+      onWillPop: () => handleOnWillPop(context),
+      child: BottomNavigationBar(
+        type: BottomNavigationBarType.shifting,
+        selectedItemColor: colors.primary,
+        unselectedItemColor: colors.primary.withOpacity(0.25),
+        currentIndex: navigationShell.currentIndex,
+        onTap: (idx) => navigationShell.goBranch(idx),
+        elevation: 0,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon( IconsApp.pagina_de_inicio),
+            label: 'Inicio',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon( IconsApp.estrella ),
+            label: 'Populares',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite_outline),
+            label: 'Favoritos',
+          ),
+        ],
+      ),
     );
   }
 }

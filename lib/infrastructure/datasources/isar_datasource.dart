@@ -4,8 +4,9 @@ import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
 
-class IsarDatasource extends LocalStorageDatasource {
 
+class IsarDatasource extends LocalStorageDatasource {
+  
   late Future<Isar> db;
 
   IsarDatasource() {
@@ -13,19 +14,14 @@ class IsarDatasource extends LocalStorageDatasource {
   }
 
   Future<Isar> openDB() async {
-    
-      final dir = await getApplicationDocumentsDirectory();
-
-      if ( Isar.instanceNames.isEmpty ) {
-        return await Isar.open(
-          [ MovieSchema],
-          inspector: true,
-          directory: dir.path,
-        );
-      }
-
-      return Future.value(Isar.getInstance());
+    final dir = await getApplicationDocumentsDirectory();
+    if ( Isar.instanceNames.isEmpty ) {
+      return await Isar.open([ MovieSchema ], inspector: true, directory: dir.path );
     }
+
+    return Future.value(Isar.getInstance());
+  }
+
 
   @override
   Future<bool> isMovieFavorite(int movieId) async {
@@ -35,29 +31,28 @@ class IsarDatasource extends LocalStorageDatasource {
       .filter()
       .idEqualTo(movieId)
       .findFirst();
-    
-    return isFavoriteMovie != null; 
+
+    return isFavoriteMovie != null;
   }
 
   @override
   Future<void> toggleFavorite(Movie movie) async {
-
+    
     final isar = await db;
 
     final favoriteMovie = await isar.movies
-    .filter()
-    .idEqualTo(movie.id)
-    .findFirst();
+      .filter()
+      .idEqualTo(movie.id)
+      .findFirst();
 
     if ( favoriteMovie != null ) {
-      // borrar
-      isar.writeTxnSync(() => isar.movies.deleteSync( favoriteMovie.isarId!) );
+      // Borrar
+      isar.writeTxnSync(() => isar.movies.deleteSync( favoriteMovie.isarId! ));
       return;
     }
 
-    // insertar
-    isar.writeTxnSync(() => isar.movies.putSync(movie) );
-    
+    // Insertar
+    isar.writeTxnSync(() => isar.movies.putSync(movie));
 
   }
 

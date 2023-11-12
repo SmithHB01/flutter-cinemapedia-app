@@ -1,9 +1,13 @@
-import 'package:cinemapedia/presentation/providers/providers.dart';
-import 'package:cinemapedia/presentation/widgets/widgets.dart';
+// Flutter
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
+// Third Party
+import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+// Project
+import 'package:cinemapedia/presentation/widgets/widgets.dart';
+import 'package:cinemapedia/presentation/providers/providers.dart';
 
 class FavoritesView extends ConsumerStatefulWidget {
   const FavoritesView({super.key});
@@ -13,60 +17,72 @@ class FavoritesView extends ConsumerStatefulWidget {
 }
 
 class FavoritesViewState extends ConsumerState<FavoritesView> {
-
-  bool isLastPage = false;
-  bool isLoading = false;
+  bool _isLastPage = false;
+  bool _isLoading = false;
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-
     loadNextPage();
-
   }
 
-  void loadNextPage() async {
+  Future<void> loadNextPage() async {
+    if (_isLoading || _isLastPage) {}
+    _isLoading = true;
 
-    if ( isLoading || isLastPage ) return;
-    isLoading = true;
+    final movies =
+        await ref.read(favoriteMoviesProvider.notifier).loadNextPage();
+    _isLoading = false;
 
-    final movies = await ref.read(favoriteMoviesProvider.notifier).loadNextPage();
-    isLoading = false;
-
-    if ( movies.isEmpty) {
-      isLastPage = true;
-    }
+    if (movies.isEmpty) _isLastPage = true;
   }
 
   @override
   Widget build(BuildContext context) {
+    final favoriteMoviesWatch = ref.watch(favoriteMoviesProvider);
+    final favoriteMoviesList = favoriteMoviesWatch.values.toList();
 
-    final favoriteMovies = ref.watch(favoriteMoviesProvider).values.toList();
-
-    if ( favoriteMovies.isEmpty) {
+    if (favoriteMoviesList.isEmpty) {
       final colors = Theme.of(context).colorScheme;
+
       return Center(
         child: Column(
-          mainAxisAlignment:  MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon( Icons.favorite_outline_sharp, size: 60, color: colors.primary),
-            Text('Ohhh No!!', style: TextStyle( fontSize: 60, color: colors.primary)),
-            const Text('No tienes películas favoritas', style: TextStyle( fontSize: 20, color: Colors.black45),),
-
-            const SizedBox( height: 20),
+            Icon(Icons.favorite_border_sharp, size: 60, color: colors.primary),
+            Text(
+              'No tienes favoritos!',
+              style: TextStyle(fontSize: 30, color: colors.primary),
+            ),
+            Text(
+              'Agrega algunas películas para verlas aquí.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 20, color: colors.secondary),
+            ),
+            const SizedBox(height: 20),
             FilledButton.tonal(
-              onPressed: () => context.go('/home/0'),
-              child: const Text('Empiaza a Buscar!')
-            )
+              onPressed: () => context.go('/'),
+              child: const Text('Empieza a buscar'),
+            ),
           ],
         ),
       );
     }
-    return Scaffold(
-      body: MovieMasonry(
-        loadNextPage: loadNextPage,
-        movies: favoriteMovies)
+
+    return Column(
+      children: [
+        AppBar(centerTitle: true, title: const Text('Tus películas favoritas')),
+        Expanded(
+          child: MovieMasonry(
+            isLastPage: _isLastPage,
+            scrollController: _scrollController,
+            movies: favoriteMoviesList,
+            loadNextPage: () => loadNextPage(),
+          ),
+        ),
+      ],
     );
   }
 }

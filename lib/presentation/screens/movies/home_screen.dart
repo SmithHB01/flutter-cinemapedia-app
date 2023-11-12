@@ -1,37 +1,49 @@
+// Flutter
 import 'package:flutter/material.dart';
+
+// Third Party
+import 'package:go_router/go_router.dart';
+
+// Project
 import 'package:cinemapedia/presentation/widgets/widgets.dart';
-import 'package:cinemapedia/presentation/views/views.dart';
 
+class HomeScreen extends StatefulWidget {
+  static const name = 'home-screen';
 
-
-
-
-
-class HomeScreen extends StatelessWidget {
-
-  static const name = 'home_screen';
-  final int pageIndex;
+  final List<Widget> children;
+  final StatefulNavigationShell navigationShell;
 
   const HomeScreen({
-    super.key, 
-    required this.pageIndex
+    required this.navigationShell,
+    required this.children,
+    super.key,
   });
 
-  final viewRoutes = const <Widget>[
-    HomeView(),
-    SizedBox(), // <--- categorias
-    FavoritesView(),
-  ];
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final PageController _pageController = PageController();
 
   @override
   Widget build(BuildContext context) {
+    if (_pageController.hasClients) {
+      _pageController.animateToPage(
+        widget.navigationShell.currentIndex,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.linear,
+      );
+    }
+
     return Scaffold(
-      body: IndexedStack(
-        index: pageIndex,
-        children: viewRoutes,
+      body: PageView(
+        physics: const NeverScrollableScrollPhysics(),
+        controller: _pageController,
+        children: widget.children,
       ),
-      bottomNavigationBar: CustomBottomNavigation(currentIndex: pageIndex) ,
+      bottomNavigationBar:
+          CustomBottomNavigationBar(navigationShell: widget.navigationShell),
     );
   }
 }
-
